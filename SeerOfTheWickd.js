@@ -55,7 +55,6 @@ function loadContent() {
         var Ghoul = new ghoul(1);
         Ghoul.init();
         Ghoul.spawn();
-        console.log(Ghoul);
     }
     console.log(ghouls);
 }
@@ -114,7 +113,7 @@ function spirit() {
         for (i = 0; i < ghoulCount; i++) {
             for (j = 0; j < 10; j++) {
                 var par = ghouls[i].blast.particles[j];
-                if (colliding(this, par) && !this.isHit) {
+                if (colliding(this, par) && !this.isHit && ghouls[i].active) {
                     this.isHit = true;
                 }
             }
@@ -178,7 +177,6 @@ function ghoul(dmg) {
     this.dmg = dmg;
     this.sprite = sprites[2];
     this.active = false;
-    this.shooting = false;
     this.width = 50;
     this.height = 50;
     this.X = 600 * Math.random();
@@ -186,6 +184,7 @@ function ghoul(dmg) {
     this.blast = new particle_system(10, this.X, this.Y, this.dmg);
     this.blast.init();
     this.init = function() {
+        this.shooting = false;
         this.X = 600 * Math.random();
         this.Y = 350 * Math.random();
         this.blast.X = this.X;
@@ -225,11 +224,10 @@ function shoot(ghoul) {
 }
 
 function reset_blast(ghoul) {
-    for (m = 0; i < ghoul.blast.particles.length; i++) {
-        ghoul.blast.bufferP[m] = ghoul.blast.particles.splice(m, 1);
-        ghoul.blast.bufferP[m].X = ghoul.X;
-        ghoul.blast.bufferP[m].Y = ghoul.Y;
-        ghoul.blast.bufferP[m].lifetime = 200;
+    for (m = 0; m < ghoul.blast.particles.length; m++) {
+        ghoul.blast.particles[m].X = ghoul.X;
+        ghoul.blast.particles[m].Y = ghoul.Y;
+        ghoul.blast.particles[m].lifetime = 200;
     }
 }
 
@@ -239,20 +237,16 @@ function despawn(enemy) {
 }
 
 function particle_system(numParticles, x, y, dmg) {
-    this.bufferP = new Array();
+    this.X = x;
+    this.Y = y;
+    this.numParticles = numParticles;
     this.particles = new Array();
     this.init = function() {
-        this.X = x;
-        this.Y = y;
         this.fading = false;
         this.alpha = 1;
         if (this.particles.length == 0) {
-            for (j = 0; j < numParticles; j++) {
-                this.particles.push(new Particle(x, y, 200, dmg));
-            }
-        } else if (this.bufferP.length >= numParticles) {
-            for (k = 0; k < numParticles; k++) {
-                this.particles[k] = this.bufferP[k];
+            for (j = 0; j < this.numParticles; j++) {
+                this.particles.push(new Particle(this.X, this.Y, 200, dmg));
             }
         }
     };
@@ -308,18 +302,17 @@ function ghoulAttack(ghoulNum) {
         for (i = 0; i < ghoulNum; i++) {
             ghouls[i].active = true;
             ghouls[i].init();
-            if(ghoulNum > 1)reset_blast(ghouls[i]);
+            console.log(ghouls[i]);
             ghouls[i].blast.init();
+            if(ghoulNum > 1)reset_blast(ghouls[i]);
         }
         ghoulCount += 1;
     } else {
         for (i = 0; i < ghouls.length; i++) {
             ghouls[i].init();
+            ghouls[i].active = true;
         }
         if (spawnInterval >= 3000) spawnInterval -= (Math.random() * 100);
-    }
-    for (i = 0; i < ghoulNum; i++) {
-        ghouls[i].active = true;
     }
     spawning = false;
 }
